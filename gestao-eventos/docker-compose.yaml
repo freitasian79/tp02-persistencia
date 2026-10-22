@@ -1,0 +1,14 @@
+services:
+  db:
+    image: postgres:16
+    container_name: gestao_eventos_db
+    environment:
+      POSTGRES_USER: eventos
+      POSTGRES_PASSWORD: eventos
+      POSTGRES_DB: gestao_eventos
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+volumes:
+  pgdata:
