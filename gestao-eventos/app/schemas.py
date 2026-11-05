@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr
-from typing import Optional
+from typing import Optional, List
+from datetime import datetime
 
 class ParticipanteBase(BaseModel):
     nome: str
@@ -35,6 +36,37 @@ class PalestranteUpdate(BaseModel):
 
 class PalestranteResponse(PalestranteBase):
     id: int
+
+    class Config:
+        from_attributes = True
+
+class AtividadeBase(BaseModel):
+    titulo: str
+    descricao: Optional[str] = None
+    inicio: datetime
+    fim: datetime
+    vagas: int
+    ativa: bool = True
+    evento_id: int
+    local_id: int
+
+class AtividadeCreate(AtividadeBase):
+    palestrantes_ids: List[int] = []
+
+class AtividadeUpdate(BaseModel):
+    titulo: Optional[str] = None
+    descricao: Optional[str] = None
+    inicio: Optional[datetime] = None
+    fim: Optional[datetime] = None
+    vagas: Optional[int] = None
+    ativa: Optional[bool] = None
+    evento_id: Optional[int] = None
+    local_id: Optional[int] = None
+    palestrantes_ids: Optional[List[int]] = None
+
+class AtividadeResponse(AtividadeBase):
+    id: int
+    palestrantes: List[PalestranteResponse] = []
 
     class Config:
         from_attributes = True
