@@ -70,3 +70,17 @@ class AtividadeResponse(AtividadeBase):
 
     class Config:
         from_attributes = True
+
+class InscricaoBase(BaseModel):
+    participante_id: int
+    atividade_id: int
+
+class InscricaoCreate(InscricaoBase):
+    pass
+
+class InscricaoResponse(InscricaoBase):
+    id: int
+    status: str
+
+    class Config:
+        from_attributes = True
