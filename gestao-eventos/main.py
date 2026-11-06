@@ -159,3 +159,48 @@ def deletar_atividade(atividade_id: int, db: Session = Depends(get_db)):
     db.delete(db_atividade)
     db.commit()
     return None
+
+@app.post("/inscricoes/", response_model=schemas.InscricaoResponse, status_code=status.HTTP_201_CREATED)
+def criar_inscricao(inscricao: schemas.InscricaoCreate, db: Session = Depends(get_db)):
+    db_participante = db.query(models.Participante).filter(models.Participante.id == inscricao.participante_id).first()
+    if not db_participante or not db_participante.ativo:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Participante inativo ou inexistente")
+
+    db_atividade = db.query(models.Atividade).filter(models.Atividade.id == inscricao.atividade_id).first()
+    if not db_atividade:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Atividade não encontrada")
+        
+    inscricao_existente = db.query(models.Inscricao).filter(
+        models.Inscricao.participante_id == inscricao.participante_id,
+        models.Inscricao.atividade_id == inscricao.atividade_id,
+        models.Inscricao.status == "confirmada"
+    ).first()
+    
+    if inscricao_existente:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Participante já inscrito nesta atividade")
+        
+    total_inscritos = db.query(models.Inscricao).filter(
+        models.Inscricao.atividade_id == inscricao.atividade_id,
+        models.Inscricao.status == "confirmada"
+    ).count()
+    
+    capacidade_maxima = db_atividade.local.capacidade if db_atividade.local else 0
+    if total_inscritos >= capacidade_maxima:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Atividade sem vagas disponíveis")
+
+    db_inscricao = models.Inscricao(**inscricao.model_dump())
+    db.add(db_inscricao)
+    db.commit()
+    db.refresh(db_inscricao)
+    return db_inscricao
+
+@app.patch("/inscricoes/{inscricao_id}/status", response_model=schemas.InscricaoResponse)
+def mudar_status_inscricao(inscricao_id: int, novo_status: str, db: Session = Depends(get_db)):
+    db_inscricao = db.query(models.Inscricao).filter(models.Inscricao.id == inscricao_id).first()
+    if not db_inscricao:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Inscrição não encontrada")
+    
+    db_inscricao.status = novo_status
+    db.commit()
+    db.refresh(db_inscricao)
+    return db_inscricao
