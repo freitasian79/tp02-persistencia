@@ -50,3 +50,14 @@ class Atividade(Base):
     evento = relationship("Evento", back_populates="atividades")
     local = relationship("Local", back_populates="atividades")
     palestrantes = relationship("Palestrante", secondary=atividade_palestrante, back_populates="atividades")
+
+class Inscricao(Base):
+    __tablename__ = "inscricoes"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    participante_id = Column(Integer, ForeignKey("participantes.id"), nullable=False)
+    atividade_id = Column(Integer, ForeignKey("atividades.id"), nullable=False)
+    status = Column(String, default="confirmada") # ex: confirmada, cancelada
+    
+    participante = relationship("Participante", backref="inscricoes")
+    atividade = relationship("Atividade", backref="inscricoes")
