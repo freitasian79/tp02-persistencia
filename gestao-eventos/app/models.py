@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Table, Boolean
 from sqlalchemy.orm import relationship
-from app.database import Base
+from app.core.database import Base
 
 atividade_palestrante = Table(
     'atividade_palestrante', Base.metadata,

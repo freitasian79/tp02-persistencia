@@ -3,9 +3,9 @@ from sqlalchemy.orm import Session
 from typing import List
 
 from app import models, schemas
-from app.core.database import get_db, engine
+from app.core.database import Base, engine, get_db
 
-models.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="API Gestão de Eventos - TP02")
 
