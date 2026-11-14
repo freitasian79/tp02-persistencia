@@ -45,3 +45,13 @@ def salvar(db: Session) -> None:
     except Exception:
         db.rollback()
         raise
+
+def paginar(query, offset: int = 0, limit: int = 20) -> dict:
+    total = query.count()
+    items = query.offset(offset).limit(limit).all()
+    return {
+        "items": items,
+        "total": total,
+        "offset": offset,
+        "limit": limit,
+    }
