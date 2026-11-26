@@ -67,7 +67,7 @@ def listar_locais(
         query = query.filter(models.Local.nome.ilike(f"%{nome}%"))
     return paginar(query, offset, limit)
 
-@app.post("/participantes/", response_model=schemas.ParticipanteResponse, status_code=status.HTTP_201_CREATED)
+@app.post("/participantes/", response_model=schemas.ParticipanteRead, status_code=status.HTTP_201_CREATED)
 def criar_participante(participante: schemas.ParticipanteCreate, db: Session = Depends(get_db)):
     db_participante = models.Participante(**participante.model_dump())
     db.add(db_participante)
@@ -90,14 +90,14 @@ def listar_participantes(
         query = query.filter(models.Participante.ativo == ativo)
     return paginar(query, offset, limit)
 
-@app.get("/participantes/{participante_id}", response_model=schemas.ParticipanteResponse)
+@app.get("/participantes/{participante_id}", response_model=schemas.ParticipanteRead)
 def obter_participante(participante_id: int, db: Session = Depends(get_db)):
     db_participante = db.query(models.Participante).filter(models.Participante.id == participante_id).first()
     if not db_participante:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Participante não encontrado")
     return db_participante
 
-@app.put("/participantes/{participante_id}", response_model=schemas.ParticipanteResponse)
+@app.put("/participantes/{participante_id}", response_model=schemas.ParticipanteRead)
 def atualizar_participante(participante_id: int, participante: schemas.ParticipanteUpdate, db: Session = Depends(get_db)):
     db_participante = db.query(models.Participante).filter(models.Participante.id == participante_id).first()
     if not db_participante:
@@ -120,7 +120,7 @@ def deletar_participante(participante_id: int, db: Session = Depends(get_db)):
     db.commit()
     return None
 
-@app.post("/palestrantes/", response_model=schemas.PalestranteResponse, status_code=status.HTTP_201_CREATED)
+@app.post("/palestrantes/", response_model=schemas.PalestranteRead, status_code=status.HTTP_201_CREATED)
 def criar_palestrante(palestrante: schemas.PalestranteCreate, db: Session = Depends(get_db)):
     db_palestrante = models.Palestrante(**palestrante.model_dump())
     db.add(db_palestrante)
@@ -140,14 +140,14 @@ def listar_palestrantes(
         query = query.filter(models.Palestrante.nome.ilike(f"%{nome}%"))
     return paginar(query, offset, limit)
 
-@app.get("/palestrantes/{palestrante_id}", response_model=schemas.PalestranteResponse)
+@app.get("/palestrantes/{palestrante_id}", response_model=schemas.PalestranteRead)
 def obter_palestrante(palestrante_id: int, db: Session = Depends(get_db)):
     db_palestrante = db.query(models.Palestrante).filter(models.Palestrante.id == palestrante_id).first()
     if not db_palestrante:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Palestrante não encontrado")
     return db_palestrante
 
-@app.put("/palestrantes/{palestrante_id}", response_model=schemas.PalestranteResponse)
+@app.put("/palestrantes/{palestrante_id}", response_model=schemas.PalestranteRead)
 def atualizar_palestrante(palestrante_id: int, palestrante: schemas.PalestranteUpdate, db: Session = Depends(get_db)):
     db_palestrante = db.query(models.Palestrante).filter(models.Palestrante.id == palestrante_id).first()
     if not db_palestrante:
@@ -170,7 +170,7 @@ def deletar_palestrante(palestrante_id: int, db: Session = Depends(get_db)):
     db.commit()
     return None
 
-@app.post("/atividades/", response_model=schemas.AtividadeResponse, status_code=status.HTTP_201_CREATED)
+@app.post("/atividades/", response_model=schemas.AtividadeRead, status_code=status.HTTP_201_CREATED)
 def criar_atividade(atividade: schemas.AtividadeCreate, db: Session = Depends(get_db)):
     db_local = db.query(models.Local).filter(models.Local.id == atividade.local_id).first()
     if not db_local or not db_local.ativo:
@@ -180,15 +180,15 @@ def criar_atividade(atividade: schemas.AtividadeCreate, db: Session = Depends(ge
     if not db_evento:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Evento não encontrado")
 
-    if atividade.inicio.replace(tzinfo=None) < db_evento.data_inicio or atividade.fim.replace(tzinfo=None) > db_evento.data_fim:
+    if atividade.inicio.date() < db_evento.data_inicio or atividade.fim.date() > db_evento.data_fim:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="A atividade deve ocorrer dentro do periodo do evento"
         )
 
-    palestrantes_db = db.query(models.Palestrante).filter(models.Palestrante.id.in_(atividade.palestrantes_ids)).all()
+    palestrantes_db = db.query(models.Palestrante).filter(models.Palestrante.id.in_(atividade.palestrante_ids)).all()
 
-    atividade_data = atividade.model_dump(exclude={"palestrantes_ids"})
+    atividade_data = atividade.model_dump(exclude={"palestrante_ids"})
     db_atividade = models.Atividade(**atividade_data)
     db_atividade.palestrantes = palestrantes_db
 
@@ -242,14 +242,14 @@ def listar_atividades(
         atividade.vagas_disponiveis = max(0, atividade.capacidade - qtd)
     return pagina
 
-@app.get("/atividades/{atividade_id}", response_model=schemas.AtividadeResponse)
+@app.get("/atividades/{atividade_id}", response_model=schemas.AtividadeRead)
 def obter_atividade(atividade_id: int, db: Session = Depends(get_db)):
     db_atividade = db.query(models.Atividade).filter(models.Atividade.id == atividade_id).first()
     if not db_atividade:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Atividade não encontrada")
     return db_atividade
 
-@app.put("/atividades/{atividade_id}", response_model=schemas.AtividadeResponse)
+@app.put("/atividades/{atividade_id}", response_model=schemas.AtividadeRead)
 def atualizar_atividade(atividade_id: int, atividade: schemas.AtividadeUpdate, db: Session = Depends(get_db)):
     db_atividade = db.query(models.Atividade).filter(models.Atividade.id == atividade_id).first()
     if not db_atividade:
@@ -257,9 +257,9 @@ def atualizar_atividade(atividade_id: int, atividade: schemas.AtividadeUpdate, d
 
     atividade_data = atividade.model_dump(exclude_unset=True)
 
-    if "palestrantes_ids" in atividade_data:
-        palestrantes_ids = atividade_data.pop("palestrantes_ids")
-        palestrantes_db = db.query(models.Palestrante).filter(models.Palestrante.id.in_(palestrantes_ids)).all()
+    if "palestrante_ids" in atividade_data:
+        palestrante_ids = atividade_data.pop("palestrante_ids")
+        palestrantes_db = db.query(models.Palestrante).filter(models.Palestrante.id.in_(palestrante_ids)).all()
         db_atividade.palestrantes = palestrantes_db
 
     for key, value in atividade_data.items():
@@ -278,7 +278,7 @@ def deletar_atividade(atividade_id: int, db: Session = Depends(get_db)):
     db.commit()
     return None
 
-@app.post("/inscricoes/", response_model=schemas.InscricaoResponse, status_code=status.HTTP_201_CREATED)
+@app.post("/inscricoes/", response_model=schemas.InscricaoRead, status_code=status.HTTP_201_CREATED)
 def criar_inscricao(inscricao: schemas.InscricaoCreate, db: Session = Depends(get_db)):
     db_participante = db.query(models.Participante).filter(models.Participante.id == inscricao.participante_id).first()
     if not db_participante or not db_participante.ativo:
@@ -330,8 +330,8 @@ def listar_inscricoes(
         query = query.filter(models.Inscricao.atividade_id == atividade_id)
     return paginar(query, offset, limit)
 
-@app.patch("/inscricoes/{inscricao_id}/status", response_model=schemas.InscricaoResponse)
-def mudar_status_inscricao(inscricao_id: int, novo_status: str, db: Session = Depends(get_db)):
+@app.patch("/inscricoes/{inscricao_id}/status", response_model=schemas.InscricaoRead)
+def mudar_status_inscricao(inscricao_id: int, novo_status: StatusInscricao, db: Session = Depends(get_db)):
     db_inscricao = db.query(models.Inscricao).filter(models.Inscricao.id == inscricao_id).first()
     if not db_inscricao:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Inscrição não encontrada")

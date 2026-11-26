@@ -1,86 +1,65 @@
-from pydantic import BaseModel, EmailStr
-from typing import Optional, List
-from datetime import datetime
+from app.schemas.atividade import AtividadeCreate, AtividadeRead, AtividadeUpdate
+from app.schemas.common import Mensagem, Page
+from app.schemas.evento import (
+    EventoCancelamento,
+    EventoCreate,
+    EventoRead,
+    EventoUpdate,
+)
+from app.schemas.inscricao import (
+    InscricaoCreate,
+    InscricaoDetalhe,
+    InscricaoRead,
+    InscricaoStatusUpdate,
+)
+from app.schemas.local import LocalCreate, LocalRead, LocalUpdate
+from app.schemas.palestrante import (
+    PalestranteCreate,
+    PalestranteRead,
+    PalestranteUpdate,
+)
+from app.schemas.participante import (
+    ParticipanteCreate,
+    ParticipanteRead,
+    ParticipanteUpdate,
+)
+from app.schemas.presenca import PresencaCreate, PresencaRead
+from app.schemas.resumos import (
+    AtividadeResumo,
+    EventoResumo,
+    LocalResumo,
+    PalestranteResumo,
+    ParticipanteResumo,
+)
 
-class ParticipanteBase(BaseModel):
-    nome: str
-    email: EmailStr
-
-class ParticipanteCreate(ParticipanteBase):
-    pass
-
-class ParticipanteUpdate(BaseModel):
-    nome: Optional[str] = None
-    email: Optional[EmailStr] = None
-    ativo: Optional[bool] = None
-
-class ParticipanteResponse(ParticipanteBase):
-    id: int
-    ativo: bool
-
-    class Config:
-        from_attributes = True
-
-class PalestranteBase(BaseModel):
-    nome: str
-    email: EmailStr
-    especialidade: Optional[str] = None
-
-class PalestranteCreate(PalestranteBase):
-    pass
-
-class PalestranteUpdate(BaseModel):
-    nome: Optional[str] = None
-    email: Optional[EmailStr] = None
-    especialidade: Optional[str] = None
-
-class PalestranteResponse(PalestranteBase):
-    id: int
-
-    class Config:
-        from_attributes = True
-
-class AtividadeBase(BaseModel):
-    titulo: str
-    descricao: Optional[str] = None
-    inicio: datetime
-    fim: datetime
-    vagas: int
-    ativa: bool = True
-    evento_id: int
-    local_id: int
-
-class AtividadeCreate(AtividadeBase):
-    palestrantes_ids: List[int] = []
-
-class AtividadeUpdate(BaseModel):
-    titulo: Optional[str] = None
-    descricao: Optional[str] = None
-    inicio: Optional[datetime] = None
-    fim: Optional[datetime] = None
-    vagas: Optional[int] = None
-    ativa: Optional[bool] = None
-    evento_id: Optional[int] = None
-    local_id: Optional[int] = None
-    palestrantes_ids: Optional[List[int]] = None
-
-class AtividadeResponse(AtividadeBase):
-    id: int
-    palestrantes: List[PalestranteResponse] = []
-
-    class Config:
-        from_attributes = True
-
-class InscricaoBase(BaseModel):
-    participante_id: int
-    atividade_id: int
-
-class InscricaoCreate(InscricaoBase):
-    pass
-
-class InscricaoResponse(InscricaoBase):
-    id: int
-    status: str
-
-    class Config:
-        from_attributes = True
+__all__ = [
+    "AtividadeCreate",
+    "AtividadeRead",
+    "AtividadeResumo",
+    "AtividadeUpdate",
+    "EventoCancelamento",
+    "EventoCreate",
+    "EventoRead",
+    "EventoResumo",
+    "EventoUpdate",
+    "InscricaoCreate",
+    "InscricaoDetalhe",
+    "InscricaoRead",
+    "InscricaoStatusUpdate",
+    "LocalCreate",
+    "LocalRead",
+    "LocalResumo",
+    "LocalUpdate",
+    "Mensagem",
+    "Page",
+    "PalestranteCreate",
+    "PalestranteRead",
+    "PalestranteResumo",
+    "PalestranteUpdate",
+    "ParticipanteCreate",
+    "ParticipanteRead",
+    "ParticipanteResumo",
+    "ParticipanteUpdate",
+    "PresencaCreate",
+    "PresencaRead",
+]
