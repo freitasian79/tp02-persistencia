@@ -11,19 +11,13 @@ from app.core.database import Base, engine, get_db
 from app.core.exceptions import registrar_handlers
 from app.models.enums import (
     StatusAtividade,
-    StatusEvento,
     StatusInscricao,
     TipoAtividade,
-    TipoEvento,
-    TipoLocal,
 )
+from app.routers import eventos, locais, palestrantes, participantes
 from app.schemas.atividade import AtividadeRead
 from app.schemas.common import Page
-from app.schemas.evento import EventoRead
 from app.schemas.inscricao import InscricaoRead
-from app.schemas.local import LocalRead
-from app.schemas.palestrante import PalestranteRead
-from app.schemas.participante import ParticipanteRead
 from app.services.common import paginar
 
 Base.metadata.create_all(bind=engine)
@@ -31,144 +25,10 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI(title="API Gestão de Eventos - TP02")
 registrar_handlers(app)
 
-@app.get("/eventos/", response_model=Page[EventoRead])
-def listar_eventos(
-    status: StatusEvento | None = None,
-    tipo: TipoEvento | None = None,
-    nome: str | None = None,
-    offset: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db),
-):
-    query = db.query(models.Evento)
-    if status:
-        query = query.filter(models.Evento.status == status)
-    if tipo:
-        query = query.filter(models.Evento.tipo == tipo)
-    if nome:
-        query = query.filter(models.Evento.nome.ilike(f"%{nome}%"))
-    return paginar(query, offset, limit)
-
-@app.get("/locais/", response_model=Page[LocalRead])
-def listar_locais(
-    tipo: TipoLocal | None = None,
-    ativo: bool | None = None,
-    nome: str | None = None,
-    offset: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db),
-):
-    query = db.query(models.Local)
-    if tipo:
-        query = query.filter(models.Local.tipo == tipo)
-    if ativo is not None:
-        query = query.filter(models.Local.ativo == ativo)
-    if nome:
-        query = query.filter(models.Local.nome.ilike(f"%{nome}%"))
-    return paginar(query, offset, limit)
-
-@app.post("/participantes/", response_model=schemas.ParticipanteRead, status_code=status.HTTP_201_CREATED)
-def criar_participante(participante: schemas.ParticipanteCreate, db: Session = Depends(get_db)):
-    db_participante = models.Participante(**participante.model_dump())
-    db.add(db_participante)
-    db.commit()
-    db.refresh(db_participante)
-    return db_participante
-
-@app.get("/participantes/", response_model=Page[ParticipanteRead])
-def listar_participantes(
-    nome: str | None = None,
-    ativo: bool | None = None,
-    offset: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db),
-):
-    query = db.query(models.Participante)
-    if nome:
-        query = query.filter(models.Participante.nome.ilike(f"%{nome}%"))
-    if ativo is not None:
-        query = query.filter(models.Participante.ativo == ativo)
-    return paginar(query, offset, limit)
-
-@app.get("/participantes/{participante_id}", response_model=schemas.ParticipanteRead)
-def obter_participante(participante_id: int, db: Session = Depends(get_db)):
-    db_participante = db.query(models.Participante).filter(models.Participante.id == participante_id).first()
-    if not db_participante:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Participante não encontrado")
-    return db_participante
-
-@app.put("/participantes/{participante_id}", response_model=schemas.ParticipanteRead)
-def atualizar_participante(participante_id: int, participante: schemas.ParticipanteUpdate, db: Session = Depends(get_db)):
-    db_participante = db.query(models.Participante).filter(models.Participante.id == participante_id).first()
-    if not db_participante:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Participante não encontrado")
-
-    participante_data = participante.model_dump(exclude_unset=True)
-    for key, value in participante_data.items():
-        setattr(db_participante, key, value)
-
-    db.commit()
-    db.refresh(db_participante)
-    return db_participante
-
-@app.delete("/participantes/{participante_id}", status_code=status.HTTP_204_NO_CONTENT)
-def deletar_participante(participante_id: int, db: Session = Depends(get_db)):
-    db_participante = db.query(models.Participante).filter(models.Participante.id == participante_id).first()
-    if not db_participante:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Participante não encontrado")
-    db.delete(db_participante)
-    db.commit()
-    return None
-
-@app.post("/palestrantes/", response_model=schemas.PalestranteRead, status_code=status.HTTP_201_CREATED)
-def criar_palestrante(palestrante: schemas.PalestranteCreate, db: Session = Depends(get_db)):
-    db_palestrante = models.Palestrante(**palestrante.model_dump())
-    db.add(db_palestrante)
-    db.commit()
-    db.refresh(db_palestrante)
-    return db_palestrante
-
-@app.get("/palestrantes/", response_model=Page[PalestranteRead])
-def listar_palestrantes(
-    nome: str | None = None,
-    offset: int = Query(0, ge=0),
-    limit: int = Query(20, ge=1, le=100),
-    db: Session = Depends(get_db),
-):
-    query = db.query(models.Palestrante)
-    if nome:
-        query = query.filter(models.Palestrante.nome.ilike(f"%{nome}%"))
-    return paginar(query, offset, limit)
-
-@app.get("/palestrantes/{palestrante_id}", response_model=schemas.PalestranteRead)
-def obter_palestrante(palestrante_id: int, db: Session = Depends(get_db)):
-    db_palestrante = db.query(models.Palestrante).filter(models.Palestrante.id == palestrante_id).first()
-    if not db_palestrante:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Palestrante não encontrado")
-    return db_palestrante
-
-@app.put("/palestrantes/{palestrante_id}", response_model=schemas.PalestranteRead)
-def atualizar_palestrante(palestrante_id: int, palestrante: schemas.PalestranteUpdate, db: Session = Depends(get_db)):
-    db_palestrante = db.query(models.Palestrante).filter(models.Palestrante.id == palestrante_id).first()
-    if not db_palestrante:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Palestrante não encontrado")
-
-    palestrante_data = palestrante.model_dump(exclude_unset=True)
-    for key, value in palestrante_data.items():
-        setattr(db_palestrante, key, value)
-
-    db.commit()
-    db.refresh(db_palestrante)
-    return db_palestrante
-
-@app.delete("/palestrantes/{palestrante_id}", status_code=status.HTTP_204_NO_CONTENT)
-def deletar_palestrante(palestrante_id: int, db: Session = Depends(get_db)):
-    db_palestrante = db.query(models.Palestrante).filter(models.Palestrante.id == palestrante_id).first()
-    if not db_palestrante:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Palestrante não encontrado")
-    db.delete(db_palestrante)
-    db.commit()
-    return None
+app.include_router(locais.router)
+app.include_router(eventos.router)
+app.include_router(participantes.router)
+app.include_router(palestrantes.router)
 
 @app.post("/atividades/", response_model=schemas.AtividadeRead, status_code=status.HTTP_201_CREATED)
 def criar_atividade(atividade: schemas.AtividadeCreate, db: Session = Depends(get_db)):
