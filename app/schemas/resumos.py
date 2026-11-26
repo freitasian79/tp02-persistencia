@@ -45,5 +45,6 @@ class AtividadeResumo(_Resumo):
     inicio: datetime
     fim: datetime
     capacidade: int
+    carga_horaria: int
     status: StatusAtividade
     local: LocalResumo

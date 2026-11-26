@@ -32,6 +32,7 @@ class Atividade(Base):
     __table_args__ = (
         CheckConstraint("fim > inicio", name="horario_valido"),
         CheckConstraint("capacidade > 0", name="capacidade_positiva"),
+        CheckConstraint("carga_horaria > 0", name="carga_horaria_positiva"),
         UniqueConstraint("evento_id", "titulo"),
         Index("ix_atividades_local_inicio", "local_id", "inicio"),
     )
@@ -45,6 +46,7 @@ class Atividade(Base):
     inicio: Mapped[datetime]
     fim: Mapped[datetime]
     capacidade: Mapped[int]
+    carga_horaria: Mapped[int] = mapped_column(default=1, server_default="1")
     status: Mapped[StatusAtividade] = mapped_column(
         enum_type(StatusAtividade),
         default=StatusAtividade.AGENDADA,

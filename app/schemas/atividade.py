@@ -16,6 +16,7 @@ class AtividadeCreate(BaseModel):
     inicio: datetime
     fim: datetime
     capacidade: int = Field(gt=0, le=10000)
+    carga_horaria: int = Field(default=1, gt=0, le=200)
     palestrante_ids: list[int] = Field(default_factory=list)
 
     _naive = field_validator("inicio", "fim")(para_naive)
@@ -37,6 +38,7 @@ class AtividadeUpdate(BaseModel):
     inicio: datetime | None = None
     fim: datetime | None = None
     capacidade: int | None = Field(default=None, gt=0, le=10000)
+    carga_horaria: int | None = Field(default=None, gt=0, le=200)
     palestrante_ids: list[int] | None = None
     motivo_alteracao: str | None = Field(default=None, max_length=255)
 
@@ -53,6 +55,7 @@ class AtividadeRead(BaseModel):
     inicio: datetime
     fim: datetime
     capacidade: int
+    carga_horaria: int
     status: StatusAtividade
     evento: EventoResumo
     local: LocalResumo
