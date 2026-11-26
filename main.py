@@ -1,7 +1,6 @@
 from fastapi import FastAPI
 
 from app.core.config import settings
-from app.core.database import Base, engine
 from app.core.exceptions import registrar_handlers
 from app.routers import (
     atividades,
@@ -13,8 +12,6 @@ from app.routers import (
     participantes,
     presencas,
 )
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title=settings.app_name)
 registrar_handlers(app)
